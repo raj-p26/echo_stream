@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Auth Screen tests', () {
     testWidgets('Initial Auth screen state', (tester) async {
-      await tester.pumpWidget(App());
+      await tester.pumpWidget(const App());
 
       final loginButtonFinder = find.text('Login');
 
@@ -13,7 +13,7 @@ void main() {
     });
 
     testWidgets('Updating state to be signup page', (tester) async {
-      await tester.pumpWidget(App());
+      await tester.pumpWidget(const App());
       final toggleButtonFinder = find.text('Create new account');
 
       await tester.tap(toggleButtonFinder);
@@ -23,7 +23,7 @@ void main() {
     });
 
     testWidgets('Entering empty text and validating inputs', (tester) async {
-      await tester.pumpWidget(App());
+      await tester.pumpWidget(const App());
 
       final loginButtonFinder = find.text('Login');
       expect(loginButtonFinder, findsOneWidget);

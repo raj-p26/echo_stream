@@ -49,7 +49,7 @@ class _AuthState extends State<Auth> {
       }
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');
-      print('auth error -> ${e.code}');
+      // print('auth error -> ${e.code}');
     } finally {
       setState(() {
         setState(() => _isSubmitting = false);
@@ -91,7 +91,7 @@ class _AuthState extends State<Auth> {
       }
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');
-      print('error code -> ${e.code}');
+      // print('error code -> ${e.code}');
     } finally {
       setState(() {
         _isSubmitting = false;
