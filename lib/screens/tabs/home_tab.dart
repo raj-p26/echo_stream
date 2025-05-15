@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/screens/see_post.dart';
 import 'package:echo_stream/widgets/post_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -26,6 +27,9 @@ class _HomeTabState extends State<HomeTab> {
     final text = _postTextController.text.trim();
     if (text.isEmpty) {
       _showSnackbar('Post body cannot be empty');
+      setState(() {
+        _isSubmitting = false;
+      });
       return;
     }
 
@@ -33,9 +37,10 @@ class _HomeTabState extends State<HomeTab> {
       'postCreatorID': _currentUser.uid,
       'postContent': text,
       'likes': [],
+      'comments': [],
       'createdAt': Timestamp.now(),
+      'updatedAt': Timestamp.now(),
     });
-
     setState(() {
       _isSubmitting = false;
     });
@@ -98,6 +103,12 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  void _seePostScreen(final String postID) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (ctx) => SeePost(postID: postID)));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -136,11 +147,23 @@ class _HomeTabState extends State<HomeTab> {
 
             return ListView.builder(
               itemCount: posts.length,
-              itemBuilder: (listCtx, idx) => PostCard(postID: posts[idx].id),
+              itemBuilder: (listCtx, idx) {
+                return PostCard(
+                  key: Key(posts[idx].id),
+                  postID: posts[idx].id,
+                  onPressed: _seePostScreen,
+                );
+              },
             );
           },
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _postTextController.dispose();
   }
 }

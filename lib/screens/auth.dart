@@ -43,9 +43,15 @@ class _AuthState extends State<Auth> {
               password: _enteredPassword,
             );
 
-        await _firestore.collection('users').doc(userCredentials.user!.uid).set(
-          {'fullName': _enteredFullName, 'email': _enteredEmail},
-        );
+        await _firestore
+            .collection('users')
+            .doc(userCredentials.user!.uid)
+            .set({
+              'fullName': _enteredFullName,
+              'email': _enteredEmail,
+              'followers': [],
+              'followings': [],
+            });
       }
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');
@@ -86,7 +92,7 @@ class _AuthState extends State<Auth> {
         final user = userCredentials.user!;
 
         await _firestore.collection('users').doc(userCredentials.user!.uid).set(
-          {'fullName': user.displayName, 'email': user.email},
+          {'fullName': user.displayName, 'email': user.email, 'followers': []},
         );
       }
     } on FirebaseAuthException catch (e) {
