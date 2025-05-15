@@ -33,13 +33,15 @@ class _HomeTabState extends State<HomeTab> {
       return;
     }
 
+    var currentTimestamp = Timestamp.now();
+
     await _firestore.collection('posts').add({
       'postCreatorID': _currentUser.uid,
       'postContent': text,
       'likes': [],
       'comments': [],
-      'createdAt': Timestamp.now(),
-      'updatedAt': Timestamp.now(),
+      'createdAt': currentTimestamp,
+      'updatedAt': currentTimestamp,
     });
     setState(() {
       _isSubmitting = false;

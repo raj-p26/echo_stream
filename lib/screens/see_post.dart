@@ -33,13 +33,14 @@ class _SeePostState extends State<SeePost> {
 
     FocusScope.of(context).unfocus();
     _commentController.clear();
+    var currentTimestamp = Timestamp.now();
 
     final comment = await _firestore.collection('comments').add({
-      'commentedAt': Timestamp.now(),
+      'commentedAt': currentTimestamp,
       'commentContent': commentContent,
       'commentorID': _currentUser.uid,
       'commentLikes': [],
-      'updatedAt': Timestamp.now(),
+      'updatedAt': currentTimestamp,
     });
 
     await _firestore.collection('posts').doc(widget.postID).update({

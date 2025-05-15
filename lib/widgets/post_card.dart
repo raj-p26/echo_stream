@@ -67,6 +67,7 @@ class _PostCardState extends State<PostCard> {
       'postContent': updatedContent,
       'updatedAt': Timestamp.now(),
     });
+    if (context.mounted) Navigator.pop(context);
   }
 
   void _showSnackbar(final String msg) {
@@ -127,8 +128,7 @@ class _PostCardState extends State<PostCard> {
 
   Future<void> _deletePost(final Post post) async {
     await _firestore.collection('posts').doc(post.id).delete();
-    for (String commentID in post.likes) {
-      print('deleting $commentID');
+    for (String commentID in post.comments) {
       await _firestore.collection('comments').doc(commentID).delete();
     }
   }
@@ -147,7 +147,10 @@ class _PostCardState extends State<PostCard> {
                 await _deletePost(post);
                 if (widget.onDeleted != null) widget.onDeleted!();
               },
-              child: const Text('Yes'),
+              child: Text(
+                'Delete',
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
             ),
             TextButton(
               onPressed: () {

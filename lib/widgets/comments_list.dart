@@ -21,6 +21,12 @@ class _CommentsListState extends State<CommentsList> {
     _postStream = _firestore.collection('posts').doc(widget.postID).snapshots();
   }
 
+  void _removeCommentFromPost(String commentID) async {
+    await _firestore.collection('posts').doc(widget.postID).update({
+      'comments': FieldValue.arrayRemove([commentID]),
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return StreamBuilder(
@@ -52,13 +58,17 @@ class _CommentsListState extends State<CommentsList> {
             final commentID = comments[idx];
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: CommentListTile(commentID: commentID, key: Key(commentID)),
+              child: CommentListTile(
+                key: Key(commentID),
+                commentID: commentID,
+                onDelete: _removeCommentFromPost,
+              ),
             );
           },
           separatorBuilder: (listContext, idx) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: const Divider(),
+            return const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0),
+              child: Divider(),
             );
           },
         );
