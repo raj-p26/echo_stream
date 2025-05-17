@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/models/user.dart';
+import 'package:echo_stream/screens/see_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -60,31 +61,46 @@ class _PostHeadlineState extends State<PostHeadline> {
         );
         final isFollowing = userInfo.followers.contains(_currentUser.uid);
 
-        return Row(
-          children: [
-            Icon(Icons.person_outline),
-            SizedBox(width: 10.0),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(userInfo.fullName, style: TextStyle(fontSize: 18.0)),
-                const SizedBox(width: 6.0),
-                Text(
-                  '@${userInfo.username}',
-                  style: TextStyle(fontWeight: FontWeight.w300),
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12.0),
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (routeCtx) {
+                    return SeeProfile(userID: userInfo.id);
+                  },
                 ),
+              );
+            },
+            child: Row(
+              children: [
+                Icon(Icons.person_outline),
+                SizedBox(width: 10.0),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(userInfo.fullName, style: TextStyle(fontSize: 18.0)),
+                    const SizedBox(width: 6.0),
+                    Text(
+                      '@${userInfo.username}',
+                      style: TextStyle(fontWeight: FontWeight.w300),
+                    ),
+                  ],
+                ),
+                const Spacer(),
+                if (widget.userID != _currentUser.uid)
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      await _followUser(isFollowing: isFollowing);
+                    },
+                    label: Text(isFollowing ? 'Following' : 'Follow'),
+                    icon: Icon(isFollowing ? Icons.check : Icons.add),
+                  ),
               ],
             ),
-            const Spacer(),
-            if (widget.userID != _currentUser.uid)
-              ElevatedButton.icon(
-                onPressed: () async {
-                  await _followUser(isFollowing: isFollowing);
-                },
-                label: Text(isFollowing ? 'Following' : 'Follow'),
-                icon: Icon(isFollowing ? Icons.check : Icons.add),
-              ),
-          ],
+          ),
         );
       },
     );

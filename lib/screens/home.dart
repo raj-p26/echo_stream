@@ -12,6 +12,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final _currentUser = FirebaseAuth.instance.currentUser!;
   Widget _currentTab = HomeTab();
   int _currentTabIndex = 0;
 
@@ -29,7 +30,7 @@ class _HomeState extends State<Home> {
         });
       case 2:
         setState(() {
-          _currentTab = ProfileTab();
+          _currentTab = ProfileTab(userID: _currentUser.uid);
         });
       default:
         setState(() {

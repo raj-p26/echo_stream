@@ -205,16 +205,11 @@ class _PostCardState extends State<PostCard> {
                   },
           child: Card.outlined(
             child: Padding(
-              padding: const EdgeInsets.only(
-                top: 16.0,
-                left: 20.0,
-                right: 20.0,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   PostHeadline(userID: postData.postCreatorID),
-                  const SizedBox(height: 10.0),
                   Text(postData.postContent, style: TextStyle(fontSize: 20.0)),
                   if (postData.createdAt.compareTo(postData.updatedAt) < 0)
                     const Text('(edited)'),

@@ -56,7 +56,6 @@ class _AuthState extends State<Auth> {
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');
       // print('auth error -> ${e.code}');
-    } finally {
       setState(() {
         setState(() => _isSubmitting = false);
       });
@@ -91,14 +90,19 @@ class _AuthState extends State<Auth> {
       if (userExistsSnapshot.data() == null) {
         final user = userCredentials.user!;
 
-        await _firestore.collection('users').doc(userCredentials.user!.uid).set(
-          {'fullName': user.displayName, 'email': user.email, 'followers': []},
-        );
+        await _firestore
+            .collection('users')
+            .doc(userCredentials.user!.uid)
+            .set({
+              'fullName': user.displayName,
+              'email': user.email,
+              'followers': [],
+              'followings': [],
+            });
       }
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');
       // print('error code -> ${e.code}');
-    } finally {
       setState(() {
         _isSubmitting = false;
       });

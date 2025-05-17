@@ -15,6 +15,7 @@ class _SetUsernameState extends State<SetUsername> {
   final _currentUser = FirebaseAuth.instance.currentUser!;
   final _formKey = GlobalKey<FormState>();
   String _enteredUsername = '';
+  String _enteredBio = '';
 
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
@@ -31,6 +32,7 @@ class _SetUsernameState extends State<SetUsername> {
 
     _firestore.collection('users').doc(_currentUser.uid).update({
       'username': _enteredUsername,
+      'bio': _enteredBio,
     });
     _replaceScreen();
   }
@@ -57,7 +59,7 @@ class _SetUsernameState extends State<SetUsername> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primaryContainer,
         title: Text(
-          'Give yourself a username',
+          'Set up your profile',
           style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
         ),
         actions: [IconButton(onPressed: () {}, icon: Icon(Icons.exit_to_app))],
@@ -77,9 +79,20 @@ class _SetUsernameState extends State<SetUsername> {
                     return 'Please enter a valid username';
                   }
 
+                  if (value.contains(' ')) {
+                    return 'Username must not have any spaces or special characters';
+                  }
+
                   return null;
                 },
                 onSaved: (value) => _enteredUsername = value!,
+              ),
+              TextFormField(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  label: Text('Bio'),
+                ),
+                onSaved: (value) => _enteredBio = value ?? '',
               ),
               const SizedBox(height: 20.0),
               Row(
