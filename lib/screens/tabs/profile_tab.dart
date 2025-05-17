@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/models/user.dart';
 import 'package:echo_stream/screens/tabs/user_list_tab.dart';
+import 'package:echo_stream/screens/tabs/user_posts_tab.dart';
 import 'package:echo_stream/widgets/post_headline.dart';
 import 'package:flutter/material.dart';
 
@@ -50,10 +51,16 @@ class _ProfileTabState extends State<ProfileTab> with TickerProviderStateMixin {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            PostHeadline(userID: user.id),
-            Text(
-              user.bio.isEmpty ? 'No bio' : user.bio,
-              style: TextStyle(fontSize: 16.0),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: PostHeadline(userID: user.id),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                user.bio.isEmpty ? 'No bio' : user.bio,
+                style: TextStyle(fontSize: 16.0),
+              ),
             ),
             TabBar(
               controller: _tabBarController,
@@ -64,13 +71,16 @@ class _ProfileTabState extends State<ProfileTab> with TickerProviderStateMixin {
               ],
             ),
             Expanded(
-              child: TabBarView(
-                controller: _tabBarController,
-                children: [
-                  const Center(child: Text('Posts')),
-                  UserListTab(userIDs: user.followers),
-                  UserListTab(userIDs: user.followings),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: TabBarView(
+                  controller: _tabBarController,
+                  children: [
+                    UserPostsTab(userID: user.id),
+                    UserListTab(userIDs: user.followers),
+                    UserListTab(userIDs: user.followings),
+                  ],
+                ),
               ),
             ),
           ],
