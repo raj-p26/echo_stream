@@ -27,44 +27,41 @@ class _UserPostsTabState extends State<UserPostsTab> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 10.0),
-      child: StreamBuilder(
-        stream: _userPostsStream,
-        builder: (ctx, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: const CircularProgressIndicator());
-          }
+    return StreamBuilder(
+      stream: _userPostsStream,
+      builder: (ctx, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: const CircularProgressIndicator());
+        }
 
-          if (snapshot.hasError) {
-            return Center(child: Text(snapshot.error.toString()));
-          }
+        if (snapshot.hasError) {
+          return Center(child: Text(snapshot.error.toString()));
+        }
 
-          final data = snapshot.data;
+        final data = snapshot.data;
 
-          if (data == null) {
-            return const Center(child: Text('No data'));
-          }
+        if (data == null) {
+          return const Center(child: Text('No data'));
+        }
 
-          return ListView.builder(
-            itemCount: data.docs.length,
-            itemBuilder: (listCtx, idx) {
-              return PostCard(
-                key: Key(data.docs[idx].id),
-                postID: data.docs[idx].id,
-                onPressed: (postID) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (builderContext) => SeePost(postID: postID),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+        return ListView.builder(
+          itemCount: data.docs.length,
+          itemBuilder: (listCtx, idx) {
+            return PostCard(
+              key: Key(data.docs[idx].id),
+              postID: data.docs[idx].id,
+              onPressed: (postID) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (builderContext) => SeePost(postID: postID),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
     );
   }
 }
