@@ -1,6 +1,7 @@
 import 'package:echo_stream/screens/tabs/home_tab.dart';
 import 'package:echo_stream/screens/tabs/profile_tab.dart';
 import 'package:echo_stream/screens/tabs/search_tab.dart';
+import 'package:echo_stream/screens/update_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -18,25 +19,15 @@ class _HomeState extends State<Home> {
 
   void _changeScreen(int index) {
     _currentTabIndex = index;
-    switch (index) {
-      case 0:
-        setState(() {
-          _currentTab = HomeTab();
-        });
-        break;
-      case 1:
-        setState(() {
-          _currentTab = SearchTab();
-        });
-      case 2:
-        setState(() {
-          _currentTab = ProfileTab(userID: _currentUser.uid);
-        });
-      default:
-        setState(() {
-          _currentTab = HomeTab();
-        });
-    }
+
+    setState(() {
+      _currentTab = switch (index) {
+        0 => HomeTab(),
+        1 => SearchTab(),
+        2 => ProfileTab(userID: _currentUser.uid),
+        _ => HomeTab(),
+      };
+    });
   }
 
   @override
@@ -46,18 +37,29 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         title: Text('EchoStream'),
         actions: [
+          if (_currentTabIndex == 2)
+            IconButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (routerCtx) => UpdateProfile()),
+                );
+              },
+              tooltip: 'Edit profile',
+              icon: const Icon(Icons.edit_outlined),
+            ),
           IconButton(
             onPressed: () async {
               await firebaseAuth.signOut();
             },
-            icon: Icon(Icons.exit_to_app),
+            icon: const Icon(Icons.exit_to_app),
           ),
         ],
       ),
       body: _currentTab,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentTabIndex,
-        items: [
+        items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
