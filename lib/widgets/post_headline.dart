@@ -75,11 +75,10 @@ class _PostHeadlineState extends State<PostHeadline> {
               );
             },
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Icon(Icons.person_outline),
-                SizedBox(width: 10.0),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(userInfo.fullName, style: TextStyle(fontSize: 18.0)),
                     const SizedBox(width: 6.0),
