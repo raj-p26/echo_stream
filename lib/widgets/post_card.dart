@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/models/post.dart';
+import 'package:echo_stream/repositories/post_repository.dart';
 import 'package:echo_stream/widgets/labelled_icon_button.dart';
 import 'package:echo_stream/widgets/post_headline.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -15,7 +16,7 @@ class PostCard extends StatefulWidget {
 
   final String postID;
 
-  final void Function(String postID)? onPressed;
+  final void Function()? onPressed;
   final void Function()? onDeleted;
 
   @override
@@ -23,29 +24,17 @@ class PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<PostCard> {
+  final _postRepository = PostRepository();
   final _currentUser = FirebaseAuth.instance.currentUser!;
-  final _firestore = FirebaseFirestore.instance;
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _postStream;
   late TextEditingController _editPostContentController;
 
-  bool _isSubmitting = false;
-
   Future<void> _toggleLike(final String postID, bool likedAlready) async {
-    setState(() {
-      _isSubmitting = true;
-    });
     if (likedAlready) {
-      await _firestore.collection('posts').doc(postID).update({
-        'likes': FieldValue.arrayRemove([_currentUser.uid]),
-      });
+      _postRepository.unlikePost(postID: postID, userID: _currentUser.uid);
     } else {
-      await _firestore.collection('posts').doc(postID).update({
-        'likes': FieldValue.arrayUnion([_currentUser.uid]),
-      });
+      _postRepository.likePost(postID: postID, userID: _currentUser.uid);
     }
-    setState(() {
-      _isSubmitting = false;
-    });
   }
 
   void _updatePost(
@@ -63,10 +52,10 @@ class _PostCardState extends State<PostCard> {
       return;
     }
 
-    await _firestore.collection('posts').doc(widget.postID).update({
-      'postContent': updatedContent,
-      'updatedAt': Timestamp.now(),
-    });
+    await _postRepository.updatePost(
+      postID: widget.postID,
+      updatedContent: updatedContent,
+    );
     if (context.mounted) Navigator.pop(context);
   }
 
@@ -126,13 +115,6 @@ class _PostCardState extends State<PostCard> {
     );
   }
 
-  Future<void> _deletePost(final Post post) async {
-    await _firestore.collection('posts').doc(post.id).delete();
-    for (String commentID in post.comments) {
-      await _firestore.collection('comments').doc(commentID).delete();
-    }
-  }
-
   void _confirmDeletePost(final Post post) {
     showDialog(
       context: context,
@@ -142,21 +124,19 @@ class _PostCardState extends State<PostCard> {
           content: const Text('Are you sure you want to delete this post?'),
           actions: [
             TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
               onPressed: () async {
                 Navigator.pop(ctx);
-                await _deletePost(post);
+                await _postRepository.deletePost(post: post);
                 if (widget.onDeleted != null) widget.onDeleted!();
               },
               child: Text(
                 'Delete',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-              },
-              child: const Text('No'),
             ),
           ],
         );
@@ -167,7 +147,7 @@ class _PostCardState extends State<PostCard> {
   @override
   void initState() {
     super.initState();
-    _postStream = _firestore.collection('posts').doc(widget.postID).snapshots();
+    _postStream = _postRepository.getPost(widget.postID);
     _editPostContentController = TextEditingController();
   }
 
@@ -197,12 +177,7 @@ class _PostCardState extends State<PostCard> {
         final isPostCreator = _currentUser.uid == postData.postCreatorID;
 
         return InkWell(
-          onTap:
-              widget.onPressed == null
-                  ? null
-                  : () {
-                    widget.onPressed!(postData.id);
-                  },
+          onTap: widget.onPressed,
           child: Card.outlined(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20.0),
@@ -218,12 +193,9 @@ class _PostCardState extends State<PostCard> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       LabelledIconButton(
-                        onPressed:
-                            _isSubmitting
-                                ? null
-                                : () async {
-                                  await _toggleLike(postData.id, likedAlready);
-                                },
+                        onPressed: () async {
+                          await _toggleLike(postData.id, likedAlready);
+                        },
                         icon: Icon(
                           likedAlready
                               ? Icons.favorite

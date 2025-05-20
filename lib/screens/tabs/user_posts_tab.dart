@@ -47,10 +47,11 @@ class _UserPostsTabState extends State<UserPostsTab> {
         return ListView.builder(
           itemCount: data.docs.length,
           itemBuilder: (listCtx, idx) {
+            final postID = data.docs[idx].id;
             return PostCard(
-              key: Key(data.docs[idx].id),
-              postID: data.docs[idx].id,
-              onPressed: (postID) {
+              key: Key(postID),
+              postID: postID,
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(

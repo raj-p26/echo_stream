@@ -1,36 +1,28 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/screens/auth.dart';
 import 'package:echo_stream/screens/home.dart';
 import 'package:echo_stream/screens/set_username.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(ProviderScope(child: App()));
+  runApp(const App());
 }
 
-class App extends ConsumerStatefulWidget {
+class App extends StatefulWidget {
   const App({super.key});
 
   @override
-  ConsumerState<App> createState() => _AppState();
+  State<App> createState() => _AppState();
 }
 
-class _AppState extends ConsumerState<App> {
-  late Stream<User?> authStateChanges;
-  final _firestore = FirebaseFirestore.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    authStateChanges = FirebaseAuth.instance.authStateChanges();
-  }
+class _AppState extends State<App> {
+  final _userRepo = UserRepository();
+  final _authStateChanges = UserRepository.userAuthStream;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +30,7 @@ class _AppState extends ConsumerState<App> {
       debugShowCheckedModeBanner: false,
       darkTheme: ThemeData.dark(),
       home: StreamBuilder(
-        stream: authStateChanges,
+        stream: _authStateChanges,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Scaffold(
@@ -46,13 +38,12 @@ class _AppState extends ConsumerState<App> {
             );
           }
 
-          if (!snapshot.hasData) {
-            return const Auth();
-          }
+          if (!snapshot.hasData) return const Auth();
+
           final userData = snapshot.data!;
 
           return FutureBuilder(
-            future: _firestore.collection('users').doc(userData.uid).get(),
+            future: _userRepo.getUserDocByID(userData.uid),
             builder: (ctx, userInfoSnapshot) {
               if (userInfoSnapshot.connectionState == ConnectionState.waiting) {
                 return Scaffold(

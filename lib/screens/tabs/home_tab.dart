@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/post_repository.dart';
 import 'package:echo_stream/screens/see_post.dart';
 import 'package:echo_stream/widgets/post_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +13,7 @@ class HomeTab extends StatefulWidget {
 }
 
 class _HomeTabState extends State<HomeTab> {
+  final _postRepository = PostRepository();
   final _firestore = FirebaseFirestore.instance;
   final _currentUser = FirebaseAuth.instance.currentUser!;
   late Stream<QuerySnapshot<Map<String, dynamic>>> postsStream;
@@ -20,32 +22,21 @@ class _HomeTabState extends State<HomeTab> {
   bool _isSubmitting = false;
 
   void _createPost() async {
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
 
     final text = _postTextController.text.trim();
     if (text.isEmpty) {
       _showSnackbar('Post body cannot be empty');
-      setState(() {
-        _isSubmitting = false;
-      });
+      setState(() => _isSubmitting = false);
       return;
     }
 
-    var currentTimestamp = Timestamp.now();
+    await _postRepository.createPost(
+      creatorID: _currentUser.uid,
+      content: text,
+    );
 
-    await _firestore.collection('posts').add({
-      'postCreatorID': _currentUser.uid,
-      'postContent': text,
-      'likes': [],
-      'comments': [],
-      'createdAt': currentTimestamp,
-      'updatedAt': currentTimestamp,
-    });
-    setState(() {
-      _isSubmitting = false;
-    });
+    setState(() => _isSubmitting = false);
 
     _postTextController.clear();
     if (mounted) Navigator.pop(context);
@@ -126,7 +117,7 @@ class _HomeTabState extends State<HomeTab> {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: _openBottomSheet,
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
       ),
       body: Container(
         margin: EdgeInsets.symmetric(horizontal: 10.0),
@@ -134,7 +125,7 @@ class _HomeTabState extends State<HomeTab> {
           stream: postsStream,
           builder: (ctx, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: const CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
 
             if (snapshot.hasError) {
@@ -153,7 +144,9 @@ class _HomeTabState extends State<HomeTab> {
                 return PostCard(
                   key: Key(posts[idx].id),
                   postID: posts[idx].id,
-                  onPressed: _seePostScreen,
+                  onPressed: () {
+                    _seePostScreen(posts[idx].id);
+                  },
                 );
               },
             );

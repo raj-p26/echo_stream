@@ -1,6 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/screens/home.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SetUsername extends StatefulWidget {
@@ -11,8 +10,8 @@ class SetUsername extends StatefulWidget {
 }
 
 class _SetUsernameState extends State<SetUsername> {
-  final _firestore = FirebaseFirestore.instance;
-  final _currentUser = FirebaseAuth.instance.currentUser!;
+  final _currentUser = UserRepository.currentUser!;
+  final _userRepository = UserRepository();
   final _formKey = GlobalKey<FormState>();
   String _enteredUsername = '';
   String _enteredBio = '';
@@ -21,16 +20,14 @@ class _SetUsernameState extends State<SetUsername> {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
-    final usersRef = _firestore.collection('users');
-    final records =
-        await usersRef.where('username', isEqualTo: _enteredUsername).get();
+    final exists = await _userRepository.usernameExists(_enteredUsername);
 
-    if (records.docs.isNotEmpty) {
+    if (exists) {
       _showSnackbar('Username is already taken');
       return;
     }
 
-    _firestore.collection('users').doc(_currentUser.uid).update({
+    await _userRepository.updateUser(_currentUser.uid, {
       'username': _enteredUsername,
       'bio': _enteredBio,
     });
@@ -62,7 +59,6 @@ class _SetUsernameState extends State<SetUsername> {
           'Set up your profile',
           style: TextStyle(color: theme.colorScheme.onPrimaryContainer),
         ),
-        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.exit_to_app))],
       ),
       body: Padding(
         padding: const EdgeInsets.all(12.0),

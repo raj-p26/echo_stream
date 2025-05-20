@@ -1,9 +1,9 @@
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/screens/tabs/home_tab.dart';
 import 'package:echo_stream/screens/tabs/profile_tab.dart';
 import 'package:echo_stream/screens/tabs/search_tab.dart';
 import 'package:echo_stream/screens/tabs/settings_tab.dart';
 import 'package:echo_stream/screens/update_profile.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class Home extends StatefulWidget {
@@ -14,7 +14,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final _currentUser = FirebaseAuth.instance.currentUser!;
+  final _currentUser = UserRepository.currentUser!;
 
   static const bottomNavigationBarItems = [
     BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),

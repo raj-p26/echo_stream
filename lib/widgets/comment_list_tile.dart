@@ -1,23 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/models/comment.dart';
+import 'package:echo_stream/repositories/comment_repository.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/widgets/labelled_icon_button.dart';
 import 'package:echo_stream/widgets/post_headline.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class CommentListTile extends StatefulWidget {
   const CommentListTile({super.key, required this.commentID, this.onDelete});
   final String commentID;
 
-  final void Function(String commentID)? onDelete;
+  final void Function()? onDelete;
 
   @override
   State<CommentListTile> createState() => _CommentListTileState();
 }
 
 class _CommentListTileState extends State<CommentListTile> {
-  final _firestore = FirebaseFirestore.instance;
-  final _currentUser = FirebaseAuth.instance.currentUser!;
+  final _commentRepository = CommentRepository();
+  final _currentUser = UserRepository.currentUser!;
   final _commentEditingController = TextEditingController();
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _commentSnapshot;
 
@@ -26,21 +27,7 @@ class _CommentListTileState extends State<CommentListTile> {
   @override
   void initState() {
     super.initState();
-    _commentSnapshot =
-        _firestore.collection('comments').doc(widget.commentID).snapshots();
-  }
-
-  void _toggleCommentLike(final bool hasAlreadyLiked) async {
-    FieldValue action;
-    if (hasAlreadyLiked) {
-      action = FieldValue.arrayRemove([_currentUser.uid]);
-    } else {
-      action = FieldValue.arrayUnion([_currentUser.uid]);
-    }
-
-    await _firestore.collection('comments').doc(widget.commentID).update({
-      'commentLikes': action,
-    });
+    _commentSnapshot = _commentRepository.getPost(widget.commentID);
   }
 
   void _updateComment({
@@ -49,12 +36,10 @@ class _CommentListTileState extends State<CommentListTile> {
   }) async {
     if (previousContent == newContent) return;
 
-    if (newContent.trim() == '') return;
-
-    await _firestore.collection('comments').doc(widget.commentID).update({
-      'commentContent': newContent,
-      'updatedAt': Timestamp.now(),
-    });
+    _commentRepository.updateComment(
+      commentID: widget.commentID,
+      newContent: newContent,
+    );
 
     if (context.mounted) Navigator.pop(context);
   }
@@ -116,8 +101,8 @@ class _CommentListTileState extends State<CommentListTile> {
 
   void _deleteComment(Comment comment) async {
     setState(() => _isLoading = true);
-    if (widget.onDelete != null) widget.onDelete!(comment.id);
-    await _firestore.collection('comments').doc(comment.id).delete();
+    if (widget.onDelete != null) widget.onDelete!();
+    await _commentRepository.deleteComment(comment.id);
     setState(() => _isLoading = false);
   }
 
@@ -130,6 +115,10 @@ class _CommentListTileState extends State<CommentListTile> {
           content: const Text('Are you sure you want to delete this post?'),
           actions: [
             TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
               onPressed: () {
                 _deleteComment(comment);
                 Navigator.pop(ctx);
@@ -138,12 +127,6 @@ class _CommentListTileState extends State<CommentListTile> {
                 'Delete',
                 style: TextStyle(color: Theme.of(context).colorScheme.error),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-              },
-              child: const Text('Cancel'),
             ),
           ],
         );
@@ -187,7 +170,11 @@ class _CommentListTileState extends State<CommentListTile> {
               children: [
                 LabelledIconButton(
                   onPressed: () async {
-                    _toggleCommentLike(hasAlreadyLiked);
+                    _commentRepository.toggleLikeComment(
+                      commentID: comment.id,
+                      userID: _currentUser.uid,
+                      isLikedAlready: hasAlreadyLiked,
+                    );
                   },
                   label: '${comment.likes.length}',
                   icon: Icon(

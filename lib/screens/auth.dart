@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -12,7 +12,7 @@ class Auth extends StatefulWidget {
 
 class _AuthState extends State<Auth> {
   final _firebaseAuth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final _userRepository = UserRepository();
 
   final _formKey = GlobalKey<FormState>();
   bool _isLogin = true;
@@ -43,15 +43,11 @@ class _AuthState extends State<Auth> {
               password: _enteredPassword,
             );
 
-        await _firestore
-            .collection('users')
-            .doc(userCredentials.user!.uid)
-            .set({
-              'fullName': _enteredFullName,
-              'email': _enteredEmail,
-              'followers': [],
-              'followings': [],
-            });
+        await _userRepository.createUser(
+          userCredentials.user!.uid,
+          fullName: _enteredFullName,
+          email: _enteredEmail,
+        );
       }
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');
@@ -81,24 +77,15 @@ class _AuthState extends State<Auth> {
       final userCredentials = await _firebaseAuth.signInWithCredential(
         credential,
       );
-      final userExistsSnapshot =
-          await _firestore
-              .collection('users')
-              .doc(userCredentials.user!.uid)
-              .get();
+      final user = userCredentials.user!;
+      final userExistsSnapshot = await _userRepository.getUserDocByID(user.uid);
 
       if (userExistsSnapshot.data() == null) {
-        final user = userCredentials.user!;
-
-        await _firestore
-            .collection('users')
-            .doc(userCredentials.user!.uid)
-            .set({
-              'fullName': user.displayName,
-              'email': user.email,
-              'followers': [],
-              'followings': [],
-            });
+        await _userRepository.createUser(
+          user.uid,
+          fullName: user.displayName!,
+          email: user.email!,
+        );
       }
     } on FirebaseAuthException catch (e) {
       _showSnackbar(e.message ?? 'Something went wrong');

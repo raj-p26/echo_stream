@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/post_repository.dart';
 import 'package:echo_stream/widgets/comment_list_tile.dart';
 import 'package:flutter/material.dart';
 
@@ -12,19 +13,13 @@ class CommentsList extends StatefulWidget {
 }
 
 class _CommentsListState extends State<CommentsList> {
-  final _firestore = FirebaseFirestore.instance;
+  final _postRepository = PostRepository();
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _postStream;
 
   @override
   void initState() {
     super.initState();
-    _postStream = _firestore.collection('posts').doc(widget.postID).snapshots();
-  }
-
-  void _removeCommentFromPost(String commentID) async {
-    await _firestore.collection('posts').doc(widget.postID).update({
-      'comments': FieldValue.arrayRemove([commentID]),
-    });
+    _postStream = _postRepository.getPost(widget.postID);
   }
 
   @override
@@ -61,7 +56,12 @@ class _CommentsListState extends State<CommentsList> {
               child: CommentListTile(
                 key: Key(commentID),
                 commentID: commentID,
-                onDelete: _removeCommentFromPost,
+                onDelete: () async {
+                  await _postRepository.removeComment(
+                    postID: widget.postID,
+                    commentID: commentID,
+                  );
+                },
               ),
             );
           },

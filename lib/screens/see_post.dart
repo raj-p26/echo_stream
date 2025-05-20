@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/comment_repository.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/widgets/comments_list.dart';
 import 'package:echo_stream/widgets/post_card.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SeePost extends StatefulWidget {
@@ -13,43 +13,31 @@ class SeePost extends StatefulWidget {
 }
 
 class _SeePostState extends State<SeePost> {
-  final _firestore = FirebaseFirestore.instance;
-  final _currentUser = FirebaseAuth.instance.currentUser!;
+  final _commentRepository = CommentRepository();
+  final _currentUser = UserRepository.currentUser!;
   final _commentController = TextEditingController();
   bool _isSubmitting = false;
 
   void _createComment() async {
-    setState(() {
-      _isSubmitting = true;
-    });
+    setState(() => _isSubmitting = true);
+
     final commentContent = _commentController.text.trim();
     if (commentContent.isEmpty) {
       _showSnackbar('Comment cannot be empty');
-      setState(() {
-        _isSubmitting = false;
-      });
+      setState(() => _isSubmitting = false);
       return;
     }
 
-    FocusScope.of(context).unfocus();
     _commentController.clear();
-    var currentTimestamp = Timestamp.now();
+    FocusScope.of(context).unfocus();
 
-    final comment = await _firestore.collection('comments').add({
-      'commentedAt': currentTimestamp,
-      'commentContent': commentContent,
-      'commentorID': _currentUser.uid,
-      'commentLikes': [],
-      'updatedAt': currentTimestamp,
-    });
+    await _commentRepository.addComment(
+      userID: _currentUser.uid,
+      postID: widget.postID,
+      content: commentContent,
+    );
 
-    await _firestore.collection('posts').doc(widget.postID).update({
-      'comments': FieldValue.arrayUnion([comment.id]),
-    });
-
-    setState(() {
-      _isSubmitting = false;
-    });
+    setState(() => _isSubmitting = false);
   }
 
   void _showSnackbar(final String msg) {
@@ -65,9 +53,7 @@ class _SeePostState extends State<SeePost> {
         children: [
           PostCard(
             postID: widget.postID,
-            onDeleted: () {
-              Navigator.pop(context);
-            },
+            onDeleted: () => Navigator.pop(context),
           ),
           const SizedBox(height: 10.0),
           Expanded(child: CommentsList(postID: widget.postID)),

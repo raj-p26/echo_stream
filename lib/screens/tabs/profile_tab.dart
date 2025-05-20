@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/models/user.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/screens/tabs/user_list_tab.dart';
 import 'package:echo_stream/screens/tabs/user_posts_tab.dart';
 import 'package:echo_stream/widgets/post_headline.dart';
@@ -15,15 +16,13 @@ class ProfileTab extends StatefulWidget {
 
 class _ProfileTabState extends State<ProfileTab> with TickerProviderStateMixin {
   late TabController _tabBarController;
-  final _firestore = FirebaseFirestore.instance;
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _profileUser;
 
   @override
   void initState() {
     super.initState();
-    _profileUser =
-        _firestore.collection('users').doc(widget.userID).snapshots();
     _tabBarController = TabController(length: 3, vsync: this);
+    _profileUser = UserRepository().getUserSnapshot(widget.userID);
   }
 
   @override

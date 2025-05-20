@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/models/user.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:echo_stream/screens/see_profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,31 +15,28 @@ class PostHeadline extends StatefulWidget {
 }
 
 class _PostHeadlineState extends State<PostHeadline> {
-  final _firestore = FirebaseFirestore.instance;
-  final _currentUser = FirebaseAuth.instance.currentUser!;
+  final _userRepository = UserRepository();
+  late User _currentUser;
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _userInfo;
 
   @override
   void initState() {
     super.initState();
-    _userInfo = _firestore.collection('users').doc(widget.userID).snapshots();
+    _currentUser = UserRepository.currentUser!;
+    _userInfo = _userRepository.getUserSnapshot(widget.userID);
   }
 
   Future<void> _followUser({required final bool isFollowing}) async {
     if (isFollowing) {
-      await _firestore.collection('users').doc(widget.userID).update({
-        'followers': FieldValue.arrayRemove([_currentUser.uid]),
-      });
-      await _firestore.collection('users').doc(_currentUser.uid).update({
-        'followings': FieldValue.arrayRemove([widget.userID]),
-      });
+      await _userRepository.unfollowUser(
+        userID: widget.userID,
+        followerID: _currentUser.uid,
+      );
     } else {
-      await _firestore.collection('users').doc(widget.userID).update({
-        'followers': FieldValue.arrayUnion([_currentUser.uid]),
-      });
-      await _firestore.collection('users').doc(_currentUser.uid).update({
-        'followings': FieldValue.arrayUnion([widget.userID]),
-      });
+      await _userRepository.followUser(
+        userID: widget.userID,
+        followerID: _currentUser.uid,
+      );
     }
   }
 
@@ -68,9 +66,7 @@ class _PostHeadlineState extends State<PostHeadline> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (routeCtx) {
-                    return SeeProfile(userID: userInfo.id);
-                  },
+                  builder: (routeCtx) => SeeProfile(userID: userInfo.id),
                 ),
               );
             },

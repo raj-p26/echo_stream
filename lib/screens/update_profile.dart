@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:echo_stream/repositories/user_repository.dart';
 import 'package:flutter/material.dart';
 
 class UpdateProfile extends StatefulWidget {
@@ -10,8 +10,8 @@ class UpdateProfile extends StatefulWidget {
 }
 
 class _UpdateProfileState extends State<UpdateProfile> {
-  final _currentUser = FirebaseAuth.instance.currentUser!;
-  final _firestore = FirebaseFirestore.instance;
+  final _currentUser = UserRepository.currentUser!;
+  final _userRepository = UserRepository();
   late Stream<DocumentSnapshot<Map<String, dynamic>>> _userStream;
   final TextEditingController _nameController = TextEditingController(),
       _bioController = TextEditingController();
@@ -24,7 +24,7 @@ class _UpdateProfileState extends State<UpdateProfile> {
     }
     final bio = _bioController.text.trim();
 
-    await _firestore.collection('users').doc(_currentUser.uid).update({
+    await _userRepository.updateUser(_currentUser.uid, {
       'fullName': name,
       'bio': bio,
     });
@@ -39,8 +39,7 @@ class _UpdateProfileState extends State<UpdateProfile> {
   @override
   void initState() {
     super.initState();
-    _userStream =
-        _firestore.collection('users').doc(_currentUser.uid).snapshots();
+    _userStream = _userRepository.getUserSnapshot(_currentUser.uid);
   }
 
   @override
