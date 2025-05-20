@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:echo_stream/repositories/post_repository.dart';
 import 'package:echo_stream/screens/see_post.dart';
 import 'package:echo_stream/widgets/post_card.dart';
+import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 
 class UserPostsTab extends StatefulWidget {
@@ -12,53 +14,31 @@ class UserPostsTab extends StatefulWidget {
 }
 
 class _UserPostsTabState extends State<UserPostsTab> {
-  final _firestore = FirebaseFirestore.instance;
-  late final Stream<QuerySnapshot<Map<String, dynamic>>> _userPostsStream;
+  late Query<Map<String, dynamic>> _postsQuery;
 
   @override
   void initState() {
     super.initState();
-    _userPostsStream =
-        _firestore
-            .collection('posts')
-            .where('postCreatorID', isEqualTo: widget.userID)
-            .snapshots();
+    _postsQuery = PostRepository().postsCollection.where(
+      'postCreatorID',
+      isEqualTo: widget.userID,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder(
-      stream: _userPostsStream,
-      builder: (ctx, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: const CircularProgressIndicator());
-        }
-
-        if (snapshot.hasError) {
-          return Center(child: Text(snapshot.error.toString()));
-        }
-
-        final data = snapshot.data;
-
-        if (data == null) {
-          return const Center(child: Text('No data'));
-        }
-
-        return ListView.builder(
-          itemCount: data.docs.length,
-          itemBuilder: (listCtx, idx) {
-            final postID = data.docs[idx].id;
-            return PostCard(
-              key: Key(postID),
-              postID: postID,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (builderContext) => SeePost(postID: postID),
-                  ),
-                );
-              },
+    return FirestoreListView(
+      query: _postsQuery,
+      itemBuilder: (ctx, doc) {
+        return PostCard(
+          key: Key(doc.id),
+          postID: doc.id,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (builderContext) => SeePost(postID: doc.id),
+              ),
             );
           },
         );

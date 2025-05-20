@@ -6,11 +6,11 @@ typedef QueryStream = Stream<QuerySnapshot<Map<String, dynamic>>>;
 typedef DocSnapshot = DocumentSnapshot<Map<String, dynamic>>;
 
 class CommentRepository {
-  final _commentsCollection = Config.firestore.collection('comments');
+  final commentsCollection = Config.firestore.collection('comments');
   final _postRepository = PostRepository();
 
   Stream<DocSnapshot> getPost(String commentID) {
-    return _commentsCollection.doc(commentID).snapshots();
+    return commentsCollection.doc(commentID).snapshots();
   }
 
   Future<void> addComment({
@@ -20,7 +20,7 @@ class CommentRepository {
   }) async {
     final currentTimestamp = Timestamp.now();
 
-    final comment = await _commentsCollection.add({
+    final comment = await commentsCollection.add({
       'commentedAt': currentTimestamp,
       'commentContent': content,
       'commentorID': userID,
@@ -36,14 +36,14 @@ class CommentRepository {
     required String newContent,
   }) async {
     if (newContent.trim().isEmpty) return;
-    await _commentsCollection.doc(commentID).update({
+    await commentsCollection.doc(commentID).update({
       'commentContent': newContent,
       'updatedAt': Timestamp.now(),
     });
   }
 
   Future<void> deleteComment(String commentID) async {
-    await _commentsCollection.doc(commentID).delete();
+    await commentsCollection.doc(commentID).delete();
   }
 
   Future<void> toggleLikeComment({
@@ -58,6 +58,6 @@ class CommentRepository {
       action = FieldValue.arrayUnion([userID]);
     }
 
-    await _commentsCollection.doc(commentID).update({'commentLikes': action});
+    await commentsCollection.doc(commentID).update({'commentLikes': action});
   }
 }

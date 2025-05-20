@@ -6,11 +6,11 @@ typedef QueryStream = Stream<QuerySnapshot<Map<String, dynamic>>>;
 typedef DocSnapshot = DocumentSnapshot<Map<String, dynamic>>;
 
 class PostRepository {
-  final _postsCollection = Config.firestore.collection('posts');
+  final postsCollection = Config.firestore.collection('posts');
   final _commentCollection = Config.firestore.collection('comments');
 
   Stream<DocSnapshot> getPost(String postID) {
-    return _postsCollection.doc(postID).snapshots();
+    return postsCollection.doc(postID).snapshots();
   }
 
   Future<void> createPost({
@@ -18,7 +18,7 @@ class PostRepository {
     required String content,
   }) async {
     final currentTimestamp = Timestamp.now();
-    await _postsCollection.add({
+    await postsCollection.add({
       'postCreatorID': creatorID,
       'postContent': content,
       'likes': [],
@@ -32,7 +32,7 @@ class PostRepository {
     required String postID,
     required String userID,
   }) async {
-    await _postsCollection.doc(postID).update({
+    await postsCollection.doc(postID).update({
       'likes': FieldValue.arrayUnion([userID]),
     });
   }
@@ -41,7 +41,7 @@ class PostRepository {
     required String postID,
     required String userID,
   }) async {
-    await _postsCollection.doc(postID).update({
+    await postsCollection.doc(postID).update({
       'likes': FieldValue.arrayRemove([userID]),
     });
   }
@@ -50,7 +50,7 @@ class PostRepository {
     required String postID,
     required String updatedContent,
   }) async {
-    await _postsCollection.doc(postID).update({
+    await postsCollection.doc(postID).update({
       'postContent': updatedContent,
       'updatedAt': Timestamp.now(),
     });
@@ -60,14 +60,14 @@ class PostRepository {
     for (final commentID in post.comments) {
       await _commentCollection.doc(commentID).delete();
     }
-    await _postsCollection.doc(post.id).delete();
+    await postsCollection.doc(post.id).delete();
   }
 
   Future<void> addComment({
     required String commentID,
     required String postID,
   }) async {
-    await _postsCollection.doc(postID).update({
+    await postsCollection.doc(postID).update({
       'comments': FieldValue.arrayUnion([commentID]),
     });
   }
@@ -76,7 +76,7 @@ class PostRepository {
     required String postID,
     required String commentID,
   }) async {
-    await _postsCollection.doc(postID).update({
+    await postsCollection.doc(postID).update({
       'comments': FieldValue.arrayRemove([commentID]),
     });
   }

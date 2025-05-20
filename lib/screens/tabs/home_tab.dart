@@ -1,8 +1,8 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:echo_stream/repositories/post_repository.dart';
 import 'package:echo_stream/screens/see_post.dart';
 import 'package:echo_stream/widgets/post_card.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_ui_firestore/firebase_ui_firestore.dart';
 import 'package:flutter/material.dart';
 
 class HomeTab extends StatefulWidget {
@@ -14,9 +14,7 @@ class HomeTab extends StatefulWidget {
 
 class _HomeTabState extends State<HomeTab> {
   final _postRepository = PostRepository();
-  final _firestore = FirebaseFirestore.instance;
   final _currentUser = FirebaseAuth.instance.currentUser!;
-  late Stream<QuerySnapshot<Map<String, dynamic>>> postsStream;
 
   final _postTextController = TextEditingController();
   bool _isSubmitting = false;
@@ -103,16 +101,6 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    postsStream =
-        _firestore
-            .collection('posts')
-            .orderBy('createdAt', descending: true)
-            .snapshots();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -121,33 +109,14 @@ class _HomeTabState extends State<HomeTab> {
       ),
       body: Container(
         margin: EdgeInsets.symmetric(horizontal: 10.0),
-        child: StreamBuilder(
-          stream: postsStream,
-          builder: (ctx, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (snapshot.hasError) {
-              return Center(child: Text(snapshot.error.toString()));
-            }
-
-            final posts = snapshot.data!.docs;
-
-            if (posts.isEmpty) {
-              return const Center(child: Text('No posts found'));
-            }
-
-            return ListView.builder(
-              itemCount: posts.length,
-              itemBuilder: (listCtx, idx) {
-                return PostCard(
-                  key: Key(posts[idx].id),
-                  postID: posts[idx].id,
-                  onPressed: () {
-                    _seePostScreen(posts[idx].id);
-                  },
-                );
+        child: FirestoreListView(
+          query: _postRepository.postsCollection,
+          itemBuilder: (ctx, doc) {
+            return PostCard(
+              key: Key(doc.id),
+              postID: doc.id,
+              onPressed: () {
+                _seePostScreen(doc.id);
               },
             );
           },

@@ -7,7 +7,7 @@ typedef DocSnapshot = DocumentSnapshot<Map<String, dynamic>>;
 
 class UserRepository {
   static final currentUser = Config.firebaseAuth.currentUser;
-  final _usersCollection = Config.firestore.collection('users');
+  final usersCollection = Config.firestore.collection('users');
   static const _randomUserCount = 10;
 
   static Stream<User?> get userAuthStream {
@@ -15,20 +15,20 @@ class UserRepository {
   }
 
   QueryStream get randomUsers {
-    return _usersCollection.limit(_randomUserCount).snapshots();
+    return usersCollection.limit(_randomUserCount).snapshots();
   }
 
   Future<DocSnapshot> getUserDocByID(String userID) {
-    return _usersCollection.doc(userID).get();
+    return usersCollection.doc(userID).get();
   }
 
   Stream<DocSnapshot> getUserSnapshot(String userID) {
-    return _usersCollection.doc(userID).snapshots();
+    return usersCollection.doc(userID).snapshots();
   }
 
   Future<bool> usernameExists(String username) async {
     final res =
-        await _usersCollection
+        await usersCollection
             .where('username', isEqualTo: username)
             .count()
             .get();
@@ -42,7 +42,7 @@ class UserRepository {
     required String fullName,
     required String email,
   }) async {
-    await _usersCollection.doc(userID).set({
+    await usersCollection.doc(userID).set({
       'fullName': fullName,
       'email': email,
       'followers': [],
@@ -51,21 +51,21 @@ class UserRepository {
   }
 
   Future<void> updateUser(String userID, Map<String, dynamic> data) async {
-    await _usersCollection.doc(userID).update(data);
+    await usersCollection.doc(userID).update(data);
   }
 
   QueryStream getUserByUsername(String username) {
-    return _usersCollection.where('username', isEqualTo: username).snapshots();
+    return usersCollection.where('username', isEqualTo: username).snapshots();
   }
 
   Future<void> followUser({
     required String userID,
     required String followerID,
   }) async {
-    await _usersCollection.doc(userID).update({
+    await usersCollection.doc(userID).update({
       'followers': FieldValue.arrayUnion([followerID]),
     });
-    await _usersCollection.doc(followerID).update({
+    await usersCollection.doc(followerID).update({
       'followings': FieldValue.arrayUnion([userID]),
     });
   }
@@ -74,10 +74,10 @@ class UserRepository {
     required String userID,
     required String followerID,
   }) async {
-    await _usersCollection.doc(userID).update({
+    await usersCollection.doc(userID).update({
       'followers': FieldValue.arrayRemove([followerID]),
     });
-    await _usersCollection.doc(followerID).update({
+    await usersCollection.doc(followerID).update({
       'followings': FieldValue.arrayRemove([userID]),
     });
   }
